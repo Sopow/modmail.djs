@@ -1,0 +1,1 @@
+export { Manager } from './typings/manager';

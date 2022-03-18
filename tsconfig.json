@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "declaration": true,
+    "noImplicitAny": true,
+    "removeComments": true,
+    "experimentalDecorators": true,
+    "rootDir": ".",
+    "sourceMap": true,
+    "listFiles": true,
+    "newLine": "LF",
+    "noEmitOnError": true,
+    "outDir": "./lib"
+  },
+  "include": ["src/"],
+  "exclude": ["node_modules", "**/__tests__/*"],
+  "compileOnSave": false
+}
