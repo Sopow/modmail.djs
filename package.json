@@ -29,9 +29,11 @@
   "bugs": {
     "url": "https://github.com/Sopow/modmail.djs/issues"
   },
-  "devDependencies": {
-    "typescript": "^4.6.2",
+  "dependencies": {
     "discord.js": "^13.6.0",
     "tiny-typed-emitter": "^2.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^4.6.2"
   }
 }
