@@ -1,6 +1,6 @@
 {
   "name": "modmail.djs",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "lib/src/index.js",
   "types": "lib/index.d.ts",
