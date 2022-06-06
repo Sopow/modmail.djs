@@ -1,11 +1,10 @@
 export interface ManagerOptions {
-    guild: string;
-    category: string;
-    prefix: string;
-    role: string;
+  guild: string;
+  category: string;
+  prefix: string;
+  role: string;
 }
 
 export interface Events {
-    'ready': () => void;
-    'offline': () => void;
+  ready: () => void;
 }

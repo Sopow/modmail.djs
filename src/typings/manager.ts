@@ -4,14 +4,12 @@ import {
   Message,
   MessageEmbed,
   TextChannel,
-  MessageReaction,
   MessageButton,
   MessageActionRow,
-  User,
 } from "discord.js";
 import { ManagerOptions, Events } from "./interfaces";
 
-class Manager extends TypedEmitter<Events> {
+export default class Manager extends TypedEmitter<Events> {
   private readonly client: Client;
   private readonly config: ManagerOptions;
   constructor(client: Client, options: ManagerOptions) {
@@ -36,9 +34,6 @@ class Manager extends TypedEmitter<Events> {
   }
 
   public async setModmail() {
-    // this.client.on("error", (err) => {
-    //   console.error(err);
-    // });
     this.client.on("messageCreate", async (message: Message) => {
       if (
         message.guild?.id !== this.config.guild &&
@@ -52,10 +47,10 @@ class Manager extends TypedEmitter<Events> {
       switch (command) {
         case "setup":
           const category = message.guild.channels.cache.find(
-            (x) => x.name == this.config.category
+            (x: { name: string }) => x.name == this.config.category
           );
           const everyone = message.guild.roles.cache.find(
-            (x) => x.name == "@everyone"
+            (x: { name: string }) => x.name == "@everyone"
           );
 
           if (category) {
@@ -115,14 +110,16 @@ class Manager extends TypedEmitter<Events> {
           if (
             (message.channel as TextChannel)?.parentId !==
             message.guild.channels.cache.find(
-              (x) => x.name == this.config.category
+              (x: { name: string }) => x.name == this.config.category
             ).id
           )
             return;
           const c = (message.channel as TextChannel).name;
           const channame = await this.getChannel(
-            message.guild.channels.cache.find((x) => x.name == c).id
+            message.guild.channels.cache.find((x: { name: any }) => x.name == c)
+              .id
           );
+          const user = await this.client.users.fetch(channame.name);
 
           if (!channame.name) {
             message.channel.send("I can't find the channel, please try again");
@@ -139,13 +136,13 @@ class Manager extends TypedEmitter<Events> {
             .setColor("RED")
             .setTimestamp();
 
-          message.author.send({ embeds: [yembed] });
+          user.send({ embeds: [yembed] });
           break;
       }
 
       if (message.channel?.type !== "DM") {
         const category = message.guild.channels.cache.find(
-          (x) => x.name == this.config.category
+          (x: { name: string }) => x.name == this.config.category
         );
         if (!category) return;
         if (
@@ -158,7 +155,7 @@ class Manager extends TypedEmitter<Events> {
           );
           if (!member) {
             this.send(
-              "Impossible d'envoyer un message, l'utilisateur a probablement ses mp fermés.",
+              "Impossible to send message, seems the user has closed mp's.",
               message.channel as TextChannel
             );
             return;
@@ -185,16 +182,18 @@ class Manager extends TypedEmitter<Events> {
         const guild = this.client.guilds.cache.get(this.config.guild);
         if (
           !guild ||
-          !guild.members.cache.some((x) => x.id === message.author.id)
+          !guild.members.cache.some(
+            (x: { id: any }) => x.id === message.author.id
+          )
         )
           return;
 
         const category = guild.channels.cache.find(
-          (x) => x.name == this.config.category
+          (x: { name: string }) => x.name == this.config.category
         );
         if (!category) return;
         const chan = guild.channels.cache.find(
-          (x) => x.name == message.author.id
+          (x: { name: any }) => x.name == message.author.id
         );
         if (chan) {
           const xembed = new MessageEmbed()
@@ -232,7 +231,7 @@ class Manager extends TypedEmitter<Events> {
 
           message.channel
             .send({ embeds: [confirmation], components: [actionrow] })
-            .then((conf) => {
+            .then((conf: Message<boolean>) => {
               msgId.push(message.id);
 
               const collector = conf.createMessageComponentCollector({
@@ -240,89 +239,97 @@ class Manager extends TypedEmitter<Events> {
                 time: 60000,
               });
 
-              collector.on("collect", async (i) => {
-                switch (i.customId) {
-                  case "yes":
-                    let sembed = new MessageEmbed()
-                      .setTitle("Ticket opened")
-                      .setColor("GREEN")
-                      .setDescription(
-                        "A ticket has been opened for you, please wait for a staff member to respond."
-                      )
-                      .setFooter({
-                        text: `Your ticket has been opened`,
-                      })
-                      .setTimestamp();
-
-                    message.react("✅");
-                    i.reply({ embeds: [sembed], ephemeral: true });
-                    collector.stop();
-
-                    const createticket = await guild.channels.create(
-                      message.author.id,
-                      {
-                        type: "GUILD_TEXT",
-                        parent: category.id,
-                        topic:
-                          "This ticket was opened by **" +
-                          message.author.tag +
-                          `**. Do **${this.config.prefix} <message>** for respond.`,
-                      }
-                    );
-
-                    const date = message.author.createdAt;
-                    const localDate = date.toLocaleDateString();
-                    const server = this.client.guilds.cache.get(
-                      this.config.prefix
-                    );
-                    const rolesupp = server?.roles.cache.find(
-                      (r) => r.id === this.config.role
-                    );
-
-                    let eembed = new MessageEmbed()
-                      .setAuthor({
-                        name: message.author.username,
-                        iconURL: message.author.avatarURL(),
-                      })
-                      .setColor("BLUE")
-                      .setThumbnail(
-                        message.author.displayAvatarURL({
-                          dynamic: true,
+              collector.on(
+                "collect",
+                async (i: {
+                  customId: any;
+                  reply: (arg0: { embeds: any[]; ephemeral: boolean }) => void;
+                }) => {
+                  switch (i.customId) {
+                    case "yes":
+                      let sembed = new MessageEmbed()
+                        .setTitle("Ticket opened")
+                        .setColor("GREEN")
+                        .setDescription(
+                          "A ticket has been opened for you, please wait for a staff member to respond."
+                        )
+                        .setFooter({
+                          text: `Your ticket has been opened`,
                         })
-                      )
-                      .setDescription(`**Message**\n${message.content}\n\n`)
-                      .addField("Account's creation date", `\`${localDate}\``);
+                        .setTimestamp();
 
-                    createticket.send({
-                      content: `There is a new ticket ${
-                        rolesupp ? rolesupp : "@everyone"
-                      } !`,
-                      embeds: [eembed],
-                    });
-                    break;
-                  case "no":
-                    message.react("❌");
-                    let rembed = new MessageEmbed()
-                      .setTitle("Ticket closed")
-                      .setColor("RED")
-                      .setDescription("Your ticket was not opened")
-                      .setFooter({
-                        text: `Your ticket is not opened`,
-                      })
-                      .setTimestamp();
+                      message.react("✅");
+                      i.reply({ embeds: [sembed], ephemeral: true });
+                      collector.stop();
 
-                    collector.stop();
-                    i.reply({ embeds: [rembed], ephemeral: true });
-                    break;
-                  default:
-                    break;
+                      const createticket = await guild.channels.create(
+                        message.author.id,
+                        {
+                          type: "GUILD_TEXT",
+                          parent: category.id,
+                          topic:
+                            "This ticket was opened by **" +
+                            message.author.tag +
+                            `**. Do **${this.config.prefix} <message>** for respond.`,
+                        }
+                      );
+
+                      const date = message.author.createdAt;
+                      const localDate = date.toLocaleDateString();
+                      const server = this.client.guilds.cache.get(
+                        this.config.prefix
+                      );
+                      const rolesupp = server?.roles.cache.find(
+                        (r: { id: string }) => r.id === this.config.role
+                      );
+
+                      let eembed = new MessageEmbed()
+                        .setAuthor({
+                          name: message.author.username,
+                          iconURL: message.author.avatarURL(),
+                        })
+                        .setColor("BLUE")
+                        .setThumbnail(
+                          message.author.displayAvatarURL({
+                            dynamic: true,
+                          })
+                        )
+                        .setDescription(`**Message**\n${message.content}\n\n`)
+                        .addField(
+                          "Account's creation date",
+                          `\`${localDate}\``
+                        );
+
+                      createticket.send({
+                        content: `There is a new ticket ${
+                          rolesupp ? rolesupp : "@everyone"
+                        } !`,
+                        embeds: [eembed],
+                      });
+                      break;
+                    case "no":
+                      message.react("❌");
+                      let rembed = new MessageEmbed()
+                        .setTitle("Ticket closed")
+                        .setColor("RED")
+                        .setDescription("Your ticket was not opened")
+                        .setFooter({
+                          text: `Your ticket is not opened`,
+                        })
+                        .setTimestamp();
+
+                      collector.stop();
+                      i.reply({ embeds: [rembed], ephemeral: true });
+                      break;
+                    default:
+                      break;
+                  }
                 }
-              });
+              );
             });
         }
       }
     });
+    this.emit("ready");
   }
 }
-
-export { Manager };
