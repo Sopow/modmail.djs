@@ -3,7 +3,7 @@
   "version": "1.0.1",
   "description": "",
   "main": "lib/src/index.js",
-  "types": "lib/index.d.ts",
+  "types": "lib/src/index.d.ts",
   "directories": {
     "test": "test"
   },
