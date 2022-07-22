@@ -1,5 +1,5 @@
 import { TypedEmitter } from "tiny-typed-emitter";
-import { Client, Message, TextChannel, ChannelType, ComponentType, MessageType, Colors, ButtonStyle } from "discord.js";
+import { Client, ChannelType, ComponentType, MessageType, Colors, ButtonStyle } from "discord.js";
 import { ManagerOptions, Events } from "./interfaces";
 
 export default class Manager extends TypedEmitter<Events> {
@@ -15,15 +15,8 @@ export default class Manager extends TypedEmitter<Events> {
     this.config = options;
   }
 
-  private async send(content: string, channel: TextChannel) {
-    if (!content) throw new Error("Message is required");
-    if (!channel) throw new Error("Channel is required");
-
-    return channel.send({ content: content });
-  }
-
-  public async setModmail() {
-    this.client.on("messageCreate", async (message: Message) => {
+  public setModmail() {
+    this.client.on("messageCreate", async message => {
       if (message.guild?.id !== this.config.guild && message.content.startsWith(this.config.prefix)) return;
       if (message.author.bot) return;
 
@@ -31,16 +24,16 @@ export default class Manager extends TypedEmitter<Events> {
 
       switch (command) {
         case "setup":
-          const category = message.guild.channels.cache.find(x => x.name == this.config.category);
-
-          if (category) {
-            this.send("Category is already setup", message.channel as TextChannel);
-            return;
-          }
-
-          if (!message.member?.permissions.has("Administrator")) {
-            this.send("You don't have the permissions for doing this", message.channel as TextChannel);
-            return;
+          if (message.channel.type == ChannelType.GuildText) {
+            if (message.guild.channels.cache.find(x => x.name == this.config.category)) {
+              message.channel.send("Category is already setup")
+              return;
+            }
+  
+            if (!message.member?.permissions.has("Administrator")) {
+              message.channel.send("You don't have the permissions for doing this")
+              return;
+            }
           }
 
           message.guild.channels.create({
@@ -59,24 +52,25 @@ export default class Manager extends TypedEmitter<Events> {
           }).then(() => message.channel.send("The category has been setup"));
           break;
         case "close":
-          if (message.type !== MessageType.Default) return;
-          if ((message.channel as TextChannel).parentId !== message.guild.channels.cache.find(x => x.name == this.config.category).id) return;
+          if (message.type == MessageType.Default && message.channel.type == ChannelType.GuildText) {
+            if (message.channel.parentId !== message.guild.channels.cache.find(x => x.name == this.config.category).id) return;
 
-          const channel = message.channel as TextChannel, user = await this.client.users.fetch(channel.name);
-
-          if (!channel.name) {
-            message.channel.send("I can't find the channel, please try again");
-            return;
+            const channelName = message.channel.name, user = await this.client.users.fetch(channelName);
+  
+            if (!channelName) {
+              message.channel.send("I can't find the channel, please try again");
+              return;
+            }
+  
+            await message.channel.delete();
+  
+            user.send({ embeds: [{
+              title: "Ticket closed",
+              description: `<@${message.author.id}> has closed the ticket.\n \n *We hope the support was useful.*`,
+              color: Colors.Red,
+              timestamp: new Date().toISOString()
+            }] });
           }
-
-          await message.channel.delete();
-
-          user.send({ embeds: [{
-            title: "Ticket closed",
-            description: `<@${message.author.id}> has closed the ticket.\n \n *We hope the support was useful.*`,
-            color: Colors.Red,
-            timestamp: new Date().toISOString()
-          }] });
           break;
       }
 
@@ -84,13 +78,13 @@ export default class Manager extends TypedEmitter<Events> {
         const category = message.guild.channels.cache.find(x => x.name == this.config.category);
 
         if (!category) return;
-        if ((message.channel as TextChannel)?.parentId === category.id && message.content.startsWith(this.config.prefix)) {
+        if (message.channel.type == ChannelType.GuildText && message.channel?.parentId === category.id && message.content.startsWith(this.config.prefix)) {
           if (command) return;
 
           const member = message.guild.members.cache.get(message.channel.name);
 
           if (!member) {
-            this.send("Impossible to send message, seems the user has closed mp's.", message.channel as TextChannel);
+            message.channel.send("Impossible to send message, seems the user has closed mp's.")
             return;
           }
 
@@ -116,10 +110,10 @@ export default class Manager extends TypedEmitter<Events> {
 
         const channel = guild.channels.cache.find(x => x.name == message.author.id);
 
-        if (channel) {
+        if (channel.type == ChannelType.GuildText) {
           message.react("✅");
 
-          (channel as TextChannel).send({ embeds: [{
+          channel.send({ embeds: [{
             color: Colors.Yellow,
             author: { name: message.author.username, icon_url: message.author.displayAvatarURL() },
             description: message.content,
@@ -137,7 +131,7 @@ export default class Manager extends TypedEmitter<Events> {
         }).then(message => {
           const collector = message.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
 
-          collector.on("collect", async interaction => {
+          collector.on("collect", interaction => {
             switch (interaction.customId) {
               case "yes":
                 message.react("✅");
