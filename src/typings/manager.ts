@@ -1,106 +1,41 @@
-import { TypedEmitter } from "tiny-typed-emitter";
-import { Client, ChannelType, ComponentType, MessageType, Colors, ButtonStyle } from "discord.js";
-import { ManagerOptions, Events } from "./interfaces";
+import { EventEmitter } from "events"
+import { Client, ChannelType, ComponentType, Colors, ButtonStyle, ApplicationCommandOptionType } from "discord.js";
+import { ManagerOptions } from "./interfaces";
 
-export default class Manager extends TypedEmitter<Events> {
-  private readonly client: Client;
-  private readonly config: ManagerOptions;
+export default class Manager extends EventEmitter {
   constructor(client: Client, options: ManagerOptions) {
     super();
 
     if (!client) throw new Error("Client is required");
     if (!options || typeof options !== "object") throw new Error("Options are required");
 
+    client.on("ready", client => {
+      client.application?.fetch().then(app => {
+        app.commands.create({ description: "Setup the category of modmail system", name: "setup" }, options.guildId)
+        app.commands.create({ description: "Close a ticket", name: "close" }, options.guildId)
+  
+        app.commands.create({
+          description: "Send a message to author of a ticket",
+          name: "send",
+          options: [
+            { description: "Message to send", name: "message", type: ApplicationCommandOptionType.String, required: true },
+            { description: "Is a anonymous message", name: "anonymous", type: ApplicationCommandOptionType.Boolean }
+          ]
+        }, options.guildId)
+      })
+    })
+
     this.client = client;
     this.config = options;
   }
 
+  private readonly client: Client;
+  private readonly config: ManagerOptions;
+
   public setModmail() {
-    this.client.on("messageCreate", async message => {
-      if (message.guild?.id !== this.config.guild && message.content.startsWith(this.config.prefix)) return;
-      if (message.author.bot) return;
-
-      const command = message.content.slice(this.config.prefix.length).split(" ").shift().toLowerCase();
-
-      switch (command) {
-        case "setup":
-          if (message.channel.type == ChannelType.GuildText) {
-            if (message.guild.channels.cache.find(x => x.name == this.config.category)) {
-              message.channel.send("Category is already setup")
-              return;
-            }
-  
-            if (!message.member?.permissions.has("Administrator")) {
-              message.channel.send("You don't have the permissions for doing this")
-              return;
-            }
-          }
-
-          message.guild.channels.create({
-            name: this.config.category,
-            type: ChannelType.GuildCategory,
-            topic: "All tickets will be here",
-            permissionOverwrites: [
-              {
-                id: (message.guild.roles.cache.get(this.config.role) || await message.guild.roles.create({
-                  name: "Support", color: "Blue", reason: "Support rôle"
-                })).id,
-                allow: ["ViewChannel", "SendMessages", "ReadMessageHistory"]
-              },
-              { id: message.guild.id, deny: ["ViewChannel", "SendMessages", "ReadMessageHistory"] },
-            ],
-          }).then(() => message.channel.send("The category has been setup"));
-          break;
-        case "close":
-          if (message.type == MessageType.Default && message.channel.type == ChannelType.GuildText) {
-            if (message.channel.parentId !== message.guild.channels.cache.find(x => x.name == this.config.category).id) return;
-
-            const channelName = message.channel.name, user = await this.client.users.fetch(channelName);
-  
-            if (!channelName) {
-              message.channel.send("I can't find the channel, please try again");
-              return;
-            }
-  
-            await message.channel.delete();
-  
-            user.send({ embeds: [{
-              title: "Ticket closed",
-              description: `<@${message.author.id}> has closed the ticket.\n \n *We hope the support was useful.*`,
-              color: Colors.Red,
-              timestamp: new Date().toISOString()
-            }] });
-          }
-          break;
-      }
-
-      if (message.channel?.type !== ChannelType.DM) {
-        const category = message.guild.channels.cache.find(x => x.name == this.config.category);
-
-        if (!category) return;
-        if (message.channel.type == ChannelType.GuildText && message.channel?.parentId === category.id && message.content.startsWith(this.config.prefix)) {
-          if (command) return;
-
-          const member = message.guild.members.cache.get(message.channel.name);
-
-          if (!member) {
-            message.channel.send("Impossible to send message, seems the user has closed mp's.")
-            return;
-          }
-
-          message.react("✅");
-
-          member.send({ embeds: [{
-            color: Colors.Green,
-            author: { name: message.author.username, icon_url: message.author.avatarURL() },
-            description: `${message.content.replace(this.config.prefix, "")}`,
-            footer: { text: "Support" },
-            timestamp: new Date().toISOString()
-          }] });
-          return;
-        }
-      } else if (message.channel.type === ChannelType.DM) {
-        const guild = this.client.guilds.cache.get(this.config.guild);
+    this.client.on("messageCreate", message => {
+      if (message.channel.type === ChannelType.DM && !message.author.bot) {
+        const guild = this.client.guilds.cache.get(this.config.guildId);
 
         if (!guild?.members.cache.some(x => x.id === message.author.id)) return;
 
@@ -108,18 +43,15 @@ export default class Manager extends TypedEmitter<Events> {
 
         if (!category) return;
 
-        const channel = guild.channels.cache.find(x => x.name == message.author.id);
+        const channel = guild.channels.cache.find(channel => channel.name == message.author.id);
 
-        if (channel.type == ChannelType.GuildText) {
-          message.react("✅");
-
-          channel.send({ embeds: [{
-            color: Colors.Yellow,
-            author: { name: message.author.username, icon_url: message.author.displayAvatarURL() },
-            description: message.content,
-            timestamp: new Date().toISOString()
-          }] });
-        } else message.channel.send({
+        if (channel?.type == ChannelType.GuildText) channel.send({ embeds: [{
+          color: Colors.Yellow,
+          author: { name: message.author.username, icon_url: message.author.displayAvatarURL() },
+          description: message.content,
+          timestamp: new Date().toISOString()
+        }] }).then(() => message.react("✅"));
+        else message.channel.send({
           embeds: [{ title: "**Confirmation ticket**", description: "React for confirm opening a ticket" }],
           components: [{
             type: ComponentType.ActionRow,
@@ -128,13 +60,13 @@ export default class Manager extends TypedEmitter<Events> {
               { type: ComponentType.Button, style: ButtonStyle.Danger, customId: "no", emoji: "❌" }
             ]
           }]
-        }).then(message => {
-          const collector = message.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
+        }).then(msg => {
+          const collector = msg.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
 
           collector.on("collect", interaction => {
             switch (interaction.customId) {
               case "yes":
-                message.react("✅");
+                msg.react("✅");
 
                 interaction.reply({
                   embeds: [{
@@ -153,9 +85,9 @@ export default class Manager extends TypedEmitter<Events> {
                   name: message.author.id,
                   type: ChannelType.GuildText,
                   parent: category.id,
-                  topic: `This ticket was opened by **${message.author.tag}**. Do **${this.config.prefix} <message>** for respond.`,
+                  topic: `This ticket was opened by **${message.author.tag}**. Do use **/send** for respond.`,
                 }).then(channel => channel.send({
-                  content: `There is a new ticket ${this.client.guilds.cache.get(this.config.prefix).roles.cache.find(r => r.id === this.config.role) || "@everyone"} !`,
+                  content: `There is a new ticket ${this.client.guilds.cache.get(this.config.guildId)?.roles.cache.find(r => r.id === this.config.role) || "@everyone"} !`,
                   embeds: [{
                     author: { name: message.author.username, icon_url: message.author.displayAvatarURL() },
                     color: Colors.Blue,
@@ -166,7 +98,7 @@ export default class Manager extends TypedEmitter<Events> {
                 }))
                 break;
               case "no":
-                message.react("❌");
+                msg.react("❌");
 
                 collector.stop();
   
@@ -185,7 +117,81 @@ export default class Manager extends TypedEmitter<Events> {
           });
         });
       }
-    });
+    })
+
+    this.client.on("interactionCreate", async interaction => {
+      if (interaction.isChatInputCommand() && !interaction.user.bot && interaction.guildId == this.config.guildId) {
+        const isTicketChannel = interaction.channel?.type == ChannelType.GuildText && interaction.channel.parentId == interaction.guild?.channels.cache.find(x => x.name == this.config.category)?.id
+
+        switch (interaction.commandName) {
+          case "setup":
+            if (interaction.channel?.type == ChannelType.GuildText) {
+              if (interaction.guild?.channels.cache.find(x => x.name == this.config.category)) {
+                interaction.reply("Category is already setup")
+                return;
+              }
+    
+              if (!interaction.guild?.members.cache.get(interaction.user.id)?.permissions.has("Administrator")) {
+                interaction.reply("You don't have the permissions for doing this")
+                return;
+              }
+            }
+
+            interaction.guild?.channels.create({
+              name: this.config.category,
+              type: ChannelType.GuildCategory,
+              topic: "All tickets will be here",
+              permissionOverwrites: [
+                {
+                  id: (interaction.guild.roles.cache.get(this.config.role) || await interaction.guild.roles.create({
+                    name: "Support", color: "Blue", reason: "Support rôle"
+                  })).id,
+                  allow: ["ViewChannel", "SendMessages", "ReadMessageHistory"]
+                },
+                { id: interaction.guild.id, deny: ["ViewChannel", "SendMessages", "ReadMessageHistory"] },
+              ],
+            }).then(() => { interaction.reply("The category has been setup") });
+            break;
+          case "close":
+            if (isTicketChannel) {
+              interaction.guild?.channels.cache.get(interaction.channelId)?.delete("Ticket closed");
+          
+              (await this.client.users.fetch(interaction.channel.name)).send({ embeds: [{
+                title: "Ticket closed",
+                description: `<@${interaction.user.id}> has closed the ticket.\n \n *We hope the support was useful.*`,
+                color: Colors.Red,
+                timestamp: new Date().toISOString()
+              }] });
+            } else interaction.reply(`This command must be used in a channel of category ${this.config.category}`)
+            break;
+          case "send":
+            if (isTicketChannel) {    
+              const member = interaction.guild?.members.cache.get(interaction.channel.name),
+                isAnonymousMessage = interaction.options.getBoolean("anonymous");
+
+              if (!member) {
+                interaction.reply("Impossible to send message, seems the user has closed mp's.")
+                return;
+              }
+
+              interaction.reply("The message has been sent")
+
+              member.send({ embeds: [{
+                color: Colors.Green,
+                author: {
+                  name: isAnonymousMessage ? "Anonyme staff" : interaction.user.username,
+                  icon_url: isAnonymousMessage ? undefined : interaction.user.avatarURL() || undefined
+                },
+                description: interaction.options.getString("message", true),
+                footer: { text: "Support" },
+                timestamp: new Date().toISOString()
+              }] });
+              return;
+            } else interaction.reply(`This command must be used in a channel of category ${this.config.category}`)
+            break;
+        }
+      }
+    })
 
     this.emit("ready");
   }

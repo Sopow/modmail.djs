@@ -17,9 +17,8 @@ const client = new Client({
 })
 
 const manager = new Manager(client, {
-    guild: '',
+    guildId: '',
     category: '',
-    prefix: '',
     role: ''
 })
 
@@ -37,14 +36,13 @@ import { Manager } from 'modmail.djs';
 import { Client } from 'discord.js'
 
 const client = new Client({
-    intents: 32767, // all intents
+    intents: 131071, // all intents
     partials: ['MESSAGE', 'CHANNEL', 'REACTION']
 })
 
 const manager = new Manager(client, {
-    guild: '',
+    guildId: '',
     category: '',
-    prefix: '',
     role: ''
 })
 
