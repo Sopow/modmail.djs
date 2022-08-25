@@ -11,7 +11,14 @@ export default class Manager extends EventEmitter {
 
     client.on("ready", client => {
       client.application?.fetch().then(app => {
-        app.commands.create({ description: "Setup the category of modmail system", name: "setup" }, options.guildId)
+        app.commands.create({
+          description: "Setup the category of modmail system",
+          name: "setup",
+          options: [
+            { description: "Category name", name: "category", type: ApplicationCommandOptionType.Channel, required: true },
+          ]
+        }, options.guildId)
+
         app.commands.create({ description: "Close a ticket", name: "close" }, options.guildId)
   
         app.commands.create({
@@ -39,7 +46,7 @@ export default class Manager extends EventEmitter {
 
         if (!guild?.members.cache.some(x => x.id === message.author.id)) return;
 
-        const category = guild.channels.cache.find(x => x.name == this.config.category);
+        const category = guild.channels.cache.find(x => x.id == this.config.categoryId);
 
         if (!category) return;
 
@@ -121,12 +128,13 @@ export default class Manager extends EventEmitter {
 
     this.client.on("interactionCreate", async interaction => {
       if (interaction.isChatInputCommand() && !interaction.user.bot && interaction.guildId == this.config.guildId) {
-        const isTicketChannel = interaction.channel?.type == ChannelType.GuildText && interaction.channel.parentId == interaction.guild?.channels.cache.find(x => x.name == this.config.category)?.id
+        const isTicketChannel = interaction.channel?.type == ChannelType.GuildText && interaction.channel.parentId == interaction.guild?.channels.cache.find(x => x.id == this.config.categoryId)?.id,
+          categoryName = this.client.guilds.cache.get(this.config.guildId)?.channels.cache.get(this.config.categoryId)?.name
 
         switch (interaction.commandName) {
           case "setup":
             if (interaction.channel?.type == ChannelType.GuildText) {
-              if (interaction.guild?.channels.cache.find(x => x.name == this.config.category)) {
+              if (interaction.guild?.channels.cache.find(x => x.id == this.config.categoryId)) {
                 interaction.reply("Category is already setup")
                 return;
               }
@@ -137,20 +145,16 @@ export default class Manager extends EventEmitter {
               }
             }
 
-            interaction.guild?.channels.create({
-              name: this.config.category,
-              type: ChannelType.GuildCategory,
-              topic: "All tickets will be here",
-              permissionOverwrites: [
-                {
-                  id: (interaction.guild.roles.cache.get(this.config.role) || await interaction.guild.roles.create({
-                    name: "Support", color: "Blue", reason: "Support rôle"
-                  })).id,
-                  allow: ["ViewChannel", "SendMessages", "ReadMessageHistory"]
-                },
-                { id: interaction.guild.id, deny: ["ViewChannel", "SendMessages", "ReadMessageHistory"] },
-              ],
-            }).then(() => { interaction.reply("The category has been setup") });
+            const category = interaction.options.getChannel("category", true)
+
+            if (category.type != ChannelType.GuildCategory) {
+              interaction.reply("The channel must be a category")
+              return
+            }
+
+            this.config.categoryId = category.id
+
+            interaction.reply("The category has been setup")
             break;
           case "close":
             if (isTicketChannel) {
@@ -162,7 +166,7 @@ export default class Manager extends EventEmitter {
                 color: Colors.Red,
                 timestamp: new Date().toISOString()
               }] });
-            } else interaction.reply(`This command must be used in a channel of category ${this.config.category}`)
+            } else interaction.reply(`This command must be used in a channel of category ${categoryName}`)
             break;
           case "send":
             if (isTicketChannel) {    
@@ -187,7 +191,7 @@ export default class Manager extends EventEmitter {
                 timestamp: new Date().toISOString()
               }] });
               return;
-            } else interaction.reply(`This command must be used in a channel of category ${this.config.category}`)
+            } else interaction.reply(`This command must be used in a channel of category ${categoryName}`)
             break;
         }
       }
