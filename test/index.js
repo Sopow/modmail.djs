@@ -5,7 +5,7 @@ const client = new Client({ intents: 131071, partials: [Partials.Message, Partia
 
 client.on("ready", () => {
   console.log("Ready!")
-  new Manager(client, { guild: "", category: "", prefix: "", role: "" }).setModmail();
+  new Manager(client, { guild: "", categoryId: "", role: "" }).setModmail();
 })
 
 client.login("")
