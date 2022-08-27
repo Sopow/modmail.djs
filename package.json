@@ -2,7 +2,7 @@
   "name": "modmail.djs",
   "version": "1.0.5",
   "description": "",
-  "main": "lib/src/index.js",
+  "main": "lib/index.js",
   "types": "lib/src/index.d.ts",
   "directories": {
     "test": "test"
