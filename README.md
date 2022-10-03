@@ -1,55 +1,55 @@
-# Modmail.DJS
+# modmail.djs
 
-Modmail.djs is a powerful Node.js module for Discord.js that allows you to create a modmail bot with one function.
+modmail.djs is a powerful Node.js module for discord.js that allows you to create a modmail bot with one function.
 
 ## Installation
 ```console
-npm i modmail.djs
+npm i modmail.djs@latest
 ```
 ## Example
 ```JS
 const { Manager } = require('modmail.djs');
-const { Client } = require('discord.js')
+const { Client, Partials } = require('discord.js');
 
 const client = new Client({
-    intents: 131071, // all intents
-    partials: ['MESSAGE', 'CHANNEL', 'REACTION']
-})
+    intents: 3276799, // all intents
+    partials: [Partials.Message, Partials.Channel, Partials.Reaction]
+});
 
 const manager = new Manager(client, {
     guildId: '',
     categoryId: '',
     role: ''
-})
+});
 
-client.on('ready', () => {
-    console.log('Ready!')
+client.once('ready', () => {
+    console.log('Ready!');
     manager.setModmail();
 })
 
-client.login('')
+client.login('');
 ```
 
 #### ES6 :
 ```JS
 import { Manager } from 'modmail.djs';
-import { Client } from 'discord.js'
+import { Client, Partials } from 'discord.js';
 
 const client = new Client({
-    intents: 131071, // all intents
-    partials: ['MESSAGE', 'CHANNEL', 'REACTION']
-})
+    intents: 3276799, // all intents
+    partials: [Partials.Message, Partials.Channel, Partials.Reaction]
+});
 
 const manager = new Manager(client, {
     guildId: '',
     categoryId: '',
     role: ''
-})
+});
 
-client.on('ready', () => {
-    console.log('Ready!')
+client.once('ready', () => {
+    console.log('Ready!');
     manager.setModmail();
-})
+});
 
-client.login('')
+client.login('');
 ```
