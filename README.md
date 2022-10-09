@@ -9,10 +9,10 @@ npm i modmail.djs@latest
 ## Example
 ```JS
 const { Manager } = require('modmail.djs');
-const { Client, Partials } = require('discord.js');
+const { Client, GatewayIntentBits, Partials } = require('discord.js');
 
 const client = new Client({
-    intents: 3276799, // all intents
+    intents: Object.keys(GatewayIntentBits), // all intents
     partials: [Partials.Message, Partials.Channel, Partials.Reaction]
 });
 
@@ -33,10 +33,10 @@ client.login('');
 #### ES6 :
 ```JS
 import { Manager } from 'modmail.djs';
-import { Client, Partials } from 'discord.js';
+import { Client, GatewayIntentBits, Partials } from 'discord.js';
 
 const client = new Client({
-    intents: 3276799, // all intents
+    intents: Object.keys(GatewayIntentBits), // all intents
     partials: [Partials.Message, Partials.Channel, Partials.Reaction]
 });
 
