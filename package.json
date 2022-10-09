@@ -1,8 +1,8 @@
 {
   "name": "modmail.djs",
-  "version": "1.0.6",
-  "description": "A simple discord.js module that let you create a discord modmail with JavaScript.",
-  "main": "lib/index.js",
+  "version": "1.0.7",
+  "description": "A simple discord.js module that let you create a discord modmail with javascript",
+  "main": "lib/src/index.js",
   "types": "lib/index.d.ts",
   "directories": {
     "test": "test"
@@ -31,8 +31,8 @@
     "url": "https://github.com/Sopow/modmail.djs/issues"
   },
   "dependencies": {
-    "discord.js": "^14.5.0",
-    "modmail.djs": "^1.0.3"
+    "discord.js": "^14.3.0",
+    "modmail.djs": "^1.0.7"
   },
   "devDependencies": {
     "typescript": "^4.8.4"
