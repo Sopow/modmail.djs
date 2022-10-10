@@ -32,8 +32,8 @@
     "url": "https://github.com/Sopow/modmail.djs/issues"
   },
   "dependencies": {
-    "discord.js": "^14.5.0",
-    "modmail.djs": "^1.0.7"
+    "discord.js": "^14.6.0",
+    "modmail.djs": "^1.0.8"
   },
   "devDependencies": {
     "typescript": "^4.8.4"
