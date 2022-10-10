@@ -1,6 +1,6 @@
 {
   "name": "modmail.djs",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "A simple discord.js module that let you create a discord modmail with JavaScript.",
   "main": "lib/src/index.js",
   "types": "lib/index.d.ts",
