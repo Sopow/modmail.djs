@@ -16,6 +16,8 @@ modmail.djs is a powerful Node.js module for discord.js that allows you to creat
 npm i modmail.djs@latest
 ```
 ## Example
+
+#### CommonJS:
 ```JS
 const { Manager } = require('modmail.djs');
 const { Client, GatewayIntentBits, Partials } = require('discord.js');
@@ -39,7 +41,7 @@ client.once('ready', () => {
 client.login('');
 ```
 
-#### ES6 :
+#### ES6:
 ```JS
 import { Manager } from 'modmail.djs';
 import { Client, GatewayIntentBits, Partials } from 'discord.js';
