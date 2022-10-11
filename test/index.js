@@ -1,11 +1,14 @@
 const { Manager } = require("modmail.djs");
-const { Client, Partials } = require("discord.js")
+const { Client, GatewayIntentBits, Partials } = require("discord.js");
 
-const client = new Client({ intents: 131071, partials: [Partials.Message, Partials.Channel, Partials.Reaction] })
+const client = new Client({
+  intents: Object.keys(GatewayIntentBits),
+  partials: [Partials.Message, Partials.Channel, Partials.Reaction],
+});
 
-client.on("ready", () => {
-  console.log("Ready!")
-  new Manager(client, { guild: "", categoryId: "", role: "" }).setModmail();
-})
+client.once("ready", () => {
+  console.log("Ready!");
+  new Manager(client, { guildId: "", categoryId: "", role: "" }).setModmail();
+});
 
-client.login("")
+client.login("");
