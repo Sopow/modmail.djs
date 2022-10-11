@@ -44,9 +44,9 @@ export default class Manager extends EventEmitter {
       if (message.channel.type === ChannelType.DM && !message.author.bot) {
         const guild = this.client.guilds.cache.get(this.config.guildId);
 
-        if (!guild?.members.cache.some(x => x.id === message.author.id)) return;
+        if (!guild?.members.cache.has(message.author.id)) return;
 
-        const category = guild.channels.cache.find(x => x.id == this.config.categoryId);
+        const category = guild.channels.cache.get(this.config.categoryId);
 
         if (!category) return;
 
@@ -94,7 +94,7 @@ export default class Manager extends EventEmitter {
                   parent: category.id,
                   topic: `This ticket was opened by **${message.author.tag}**. Do use **/send** for respond.`,
                 }).then(channel => channel.send({
-                  content: `There is a new ticket ${this.client.guilds.cache.get(this.config.guildId)?.roles.cache.find(r => r.id === this.config.role) || "@everyone"} !`,
+                  content: `There is a new ticket ${this.client.guilds.cache.get(this.config.guildId)?.roles.cache.get(this.config.role) || "@everyone"} !`,
                   embeds: [{
                     author: { name: message.author.username, icon_url: message.author.displayAvatarURL() },
                     color: Colors.Blue,
@@ -128,13 +128,13 @@ export default class Manager extends EventEmitter {
 
     this.client.on("interactionCreate", async interaction => {
       if (interaction.isChatInputCommand() && !interaction.user.bot && interaction.guildId == this.config.guildId) {
-        const isTicketChannel = interaction.channel?.type == ChannelType.GuildText && interaction.channel.parentId == interaction.guild?.channels.cache.find(x => x.id == this.config.categoryId)?.id,
+        const isTicketChannel = interaction.channel?.type == ChannelType.GuildText && interaction.channel.parentId == interaction.guild?.channels.cache.get(this.config.categoryId)?.id,
           categoryName = this.client.guilds.cache.get(this.config.guildId)?.channels.cache.get(this.config.categoryId)?.name
 
         switch (interaction.commandName) {
           case "setup":
             if (interaction.channel?.type == ChannelType.GuildText) {
-              if (interaction.guild?.channels.cache.find(x => x.id == this.config.categoryId)) {
+              if (interaction.guild?.channels.cache.get(this.config.categoryId)) {
                 interaction.reply("Category is already setup")
                 return;
               }
