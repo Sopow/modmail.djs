@@ -9,7 +9,7 @@
 
 # modmail.djs
 
-modmail.djs is a powerful Node.js module for discord.js that allows you to create a modmail bot with one function.
+A powerful Node.js module for discord.js that allows you to create a modmail bot with one function.
 
 ## Installation
 ```console
