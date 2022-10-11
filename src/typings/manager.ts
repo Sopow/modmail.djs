@@ -15,7 +15,7 @@ export default class Manager extends EventEmitter {
           description: "Setup the category of modmail system",
           name: "setup",
           options: [
-            { description: "Category name", name: "category", type: ApplicationCommandOptionType.Channel, required: true },
+            { description: "Category name", name: "category", type: ApplicationCommandOptionType.Channel, channelTypes: [ChannelType.GuildCategory], required: true },
           ]
         }, options.guildId)
 
