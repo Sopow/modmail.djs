@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "discord.js": "^14.6.0",
-    "modmail.djs": "^1.0.8"
+    "modmail.djs": "^1.0.9"
   },
   "devDependencies": {
     "typescript": "^4.8.4"
