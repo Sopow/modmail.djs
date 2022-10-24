@@ -5,8 +5,8 @@ import { Events, ManagerOptions } from "./typings/interfaces";
 export class Manager extends EventEmitter {
   constructor(client: Client, options: ManagerOptions)
 
-  private client: Client;
-  private config: ManagerOptions;
+  public client: Client;
+  public config: ManagerOptions;
 
   public on<K extends keyof Events>(event: K, listener: (...args: Events[K]) => void): this;
 
