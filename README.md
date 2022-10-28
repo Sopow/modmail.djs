@@ -36,7 +36,7 @@ const manager = new Manager(client, {
 client.once('ready', () => {
     console.log('Ready!');
     manager.setModmail();
-})
+});
 
 client.login('');
 ```
