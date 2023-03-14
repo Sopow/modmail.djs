@@ -1,3 +1,7 @@
+# modmail.djs
+
+> A powerful Node.js module for discord.js that allows you to create a modmail bot with one function.
+
 <div align="center">
 	<br />
 	<p>
@@ -5,10 +9,6 @@
 		<a href="https://www.npmjs.com/package/modmail.djs"><img src="https://img.shields.io/npm/dt/modmail.djs.svg?maxAge=3600" alt="npm downloads" /></a>
 	</p>
 </div>
-
-# modmail.djs
-
-A powerful Node.js module for discord.js that allows you to create a modmail bot with one function.
 
 ## Installation
 ```console
